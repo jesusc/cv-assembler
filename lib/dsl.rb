@@ -27,6 +27,12 @@ module Assembler
       @docs = []
     end
 
+    def check
+      if @longname.nil?
+        raise "Expected name for merit #{@name}"
+      end
+    end
+    
     # Returns a latex normalized name
     def name
       @name.to_s.gsub(' ', '')
@@ -167,6 +173,7 @@ module Assembler
       def merit(name, &block)
         @doc.merits << merit = Merit.new(name)
         MeritKeyword.new(merit).instance_eval(&block)
+        merit.check
         merit
       end
       

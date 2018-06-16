@@ -88,7 +88,8 @@ module Assembler
         
         # Table with the list of documents associated to the section
         println '\renewcommand{\arraystretch}{1.5}'
-        println '\begin{tabular}{lll}'
+        #        println '\begin{tabular}{lll}'
+        println '\begin{longtable}[l]{lp{15cm}l}'
        
         rows = section_merits.select { |m| m.category == c }.
         map { |m|
@@ -101,7 +102,8 @@ module Assembler
         }.join($/)
         
         println rows
-        println '\end{tabular}'
+        #println '\end{tabular}'
+        println '\end{longtable}'
         
         println '\newpage'
         # End-of-table
@@ -140,6 +142,7 @@ module Assembler
       println '\pagestyle{fancy}'
 
       println '\usepackage[linktoc=all]{hyperref}'
+      println '\usepackage{longtable}'
       #println '\hypersetup{
     #colorlinks,
     #citecolor=black,
@@ -251,7 +254,9 @@ module Assembler
       v = name.to_s.gsub('.', '').
           gsub('_', '').
           gsub('-', '').
-          gsub('ó', 'o')
+          gsub('ó', 'o').
+          gsub('(', '').
+          gsub(')', '')  
       (0..9).to_a.inject(v) { |tmp, i| tmp.gsub(i.to_s, (65 + i).chr) }
     end
     
