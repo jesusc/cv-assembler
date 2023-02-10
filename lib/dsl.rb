@@ -5,8 +5,8 @@ module Assembler
     attr_accessor :root_dir
     attr_reader :merits
     attr_reader :categories
-    attr_accessor :fullname, :title, :subtitle
-    
+    attr_accessor :fullname, :title, :subtitle, :text
+
     def initialize
       @merits = []
       @categories = []
@@ -46,9 +46,17 @@ module Assembler
     def include_jpg(filename, options)
       @included << JPG.new(filename, options)
     end
+    
+    def include_png(filename, options)
+      @included << PNG.new(filename, options)
+    end
 
     def include_pdf(filename, options)
       @included << PDF.new(filename, options)
+    end
+
+    def include_other(element)
+      @included << element
     end
 
     def add_item(item)
@@ -105,9 +113,21 @@ module Assembler
   class JPG < IncludedFile
   end
 
+  class PNG < IncludedFile
+  end
+
   class PDF < IncludedFile
   end
 
+  class Text
+    attr_reader :title, :text
+    def initialize(title, text)
+      @title = title
+      @text = text
+    end
+  end
+  
+  
   class Category
     attr_reader :name
     attr_accessor :description
@@ -201,6 +221,8 @@ module Assembler
       def include(filename, options = {})
         if filename =~ /\.jpg$/
           @merit.include_jpg(filename, options)
+        elsif filename =~ /\.png$/
+          @merit.include_png(filename, options)
         elsif filename =~ /\.pdf$/
           @merit.include_pdf(filename, options)
         end
@@ -240,6 +262,17 @@ module Assembler
         @merit.add_doc_definition(doc)
         doc
       end
+
+      #TextInfo = Struct.new(:str, :title)
+      def text(title, text)
+      #  @merit.text = TextInfo.new(text, title)
+        
+        item = Item.new(@merit, @merit.name.to_s + title)
+        item.longname = title
+        @merit.add_item item
+        item.include_other(Text.new(title, text))
+        item
+      end
       
       def item(str, &block)
         item = Item.new(@merit, str)
@@ -258,6 +291,10 @@ module Assembler
       @merit = item # This is to make IncludeKeywords work as expected
     end
 
+    def name(str)
+      @merit.longname = str
+    end
+    
   end
   
   def self.create_merits(&block)

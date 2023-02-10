@@ -97,6 +97,12 @@ module Assembler
           r2 = m.items.map { |i|
             "~ & ~~~ #{i.latex_longname} & \\pageref{#{i.as_label}.1} \\\\"
           }.join($/)
+
+          # This might be naturally solved with a new type of .item
+          #description = ''
+          #if m.text then
+          #  description = "~ & ~~~ #{m.text.title} & \\pageref{#{m.as_label}.text} \\\\"
+          #end
           
           r1 + r2
         }.join($/)
@@ -107,8 +113,7 @@ module Assembler
         
         println '\newpage'
         # End-of-table
-
-
+        
         merit_pages = all_ordered_merits.select { |m| m.category == c }.
         map { |m|
           m.latex(context)
@@ -123,7 +128,7 @@ module Assembler
     
     def print_packages
       println '\usepackage[utf8]{inputenc}'
-      println '\usepackage[spanish]{babel}'
+      println '\usepackage[spanish,es-tabla]{babel}'
       println '\selectlanguage{spanish}'
 
       println '\usepackage{graphicx}'
@@ -135,7 +140,7 @@ module Assembler
       #println '\newcounter{includepdfpage}'
 
 
-      println '\usepackage[top=1.5cm, bottom=0in, left=1cm, right=1cm]{geometry}'
+      println '\usepackage[top=1.5cm, bottom=1.5cm, left=1cm, right=1cm]{geometry}'
       println '\setlength{\headsep}{0.5cm}'
   
       println '\usepackage{fancyhdr}'
@@ -143,6 +148,8 @@ module Assembler
 
       println '\usepackage[linktoc=all]{hyperref}'
       println '\usepackage{longtable}'
+
+      println '\renewcommand{\tablename}{Tabla}'
       #println '\hypersetup{
     #colorlinks,
     #citecolor=black,
@@ -150,7 +157,8 @@ module Assembler
     #linkcolor=black,
     #urlcolor=black
 #}'
-      
+
+      println '\usepackage{changepage}'
     end
 
     def title_or_default
@@ -202,7 +210,6 @@ module Assembler
   class Merit
     def latex(context)
       # subsection = "\\subsection{#{self.latex_longname}}"
-
       desc = self.category.short_descriptive_name
       ltext = desc + " - " + self.latex_longname 
       header = "\\lhead{#{ltext}}\\chead{}\\rhead{\\thepage}"
@@ -239,7 +246,7 @@ module Assembler
     def as_label
       if not self.used_doc.nil?
         self.used_doc.as_label
-      elsif @included.empty?
+      elsif @included.empty?# and not self.items.empty?
         self.items.first.as_label
       else
         Merit.label_from_name(self.name)
@@ -255,8 +262,16 @@ module Assembler
           gsub('_', '').
           gsub('-', '').
           gsub('ó', 'o').
+          gsub('á', 'a').
+          gsub('í', 'i').
+          gsub('ú', 'u').
+          gsub('é', 'e').
+          gsub(',', '').
+          gsub('\'', '').
           gsub('(', '').
-          gsub(')', '')  
+          gsub('ñ', 'nh').
+          gsub(')', '')
+      v = v + self.object_id.to_s
       (0..9).to_a.inject(v) { |tmp, i| tmp.gsub(i.to_s, (65 + i).chr) }
     end
     
@@ -309,6 +324,27 @@ module Assembler
     end
   end
 
+  class PNG
+    include FileFinder
+    def latex(context)
+      abs_path = find_path(context) 
+      
+      graphic_options = '[width=0.85\textwidth]'
+      if @options[:fit] == false
+        graphic_options = ''
+      end
+
+      label = ''
+      if context.is_first_file
+        label = "\\phantomsection\\label{#{context.current_merit.as_label}.1}"
+      end
+
+ 
+      label + "\\includegraphics#{graphic_options}{#{abs_path}}\\newpage"
+    end
+  end
+
+  
   # JPG files
   class PDF
     include FileFinder
@@ -339,6 +375,25 @@ module Assembler
     end
   end
 
+  class Text
+    def latex(context)
+      label = ''
+      if context.is_first_file
+        label = "\\phantomsection\\label{#{context.current_merit.as_label}.1}"
+      end
+      
+      contents = "\\section*{#{context.section_merit.latex_longname}}\\subsection*{#{@title}}\n#{@text}"
+      more_contents = label + "\\begin{adjustwidth}{1cm}{1cm}\n" + contents + "\n \\end{adjustwidth}"
+      #more_contents = contents
+      #"\\newgeometry{bottom=1.5cm}"
+      #+
+      "\\large" + more_contents + "\\normalsize \\newpage"
+      #+
+      #"\\restoregeometry  \\newpage"
+    end
+  end
+    
+  
   class Category
     def folder_text
       if @folder then "#{@folder}/" else '' end
@@ -365,7 +420,7 @@ module Assembler
     def latex2
       println '\documentclass{article}'
       println '\usepackage[utf8]{inputenc}'
-      println '\usepackage[spanish]{babel}'
+      println '\usepackage[spanish,es-tabla]{babel}'
       println '\selectlanguage{spanish}'
 
       println '\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}'      
