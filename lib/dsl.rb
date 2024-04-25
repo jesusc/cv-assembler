@@ -95,6 +95,7 @@ module Assembler
   
   class Item < Merit
     attr_reader :parent
+    attr_reader :category
     
     def initialize(parent, str)
       super(str)

@@ -59,6 +59,7 @@ module Assembler
       # uniq is needed because as_label may use a merit item to
       # generate the label, an this produces duplicates
       all_labelled_elements.map { |m|
+        #puts m.category.name
          "\\newcounter{includepdfpage#{m.as_label}}"
       }.uniq.each { |s|
         println s
